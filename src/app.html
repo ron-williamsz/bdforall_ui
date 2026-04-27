@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>BD FOR ALL</title>
+		<script>
+			window.__API_URL__ = "%bdforall.apiurl%";
+			window.__nativeFetch__ = window.fetch.bind(window);
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+		<script>
+			window.ChatWidgetConfig = {
+				apiUrl: window.location.origin + "/chat-widget",
+				get authToken() { return localStorage.getItem("bdforall_token") || ""; },
+				position: "bottom-right",
+				primaryColor: "#e74c3c",
+				title: "Meu Assistente",
+				welcomeMessage: "Olá! 👋 Como posso ajudar?",
+				placeholder: "Digite sua mensagem...",
+				defaultContext: "default"
+			};
+		</script>
+		<script>
+			(function() {
+				var svelteKitFetch = window.fetch;
+				window.fetch = function(url, opts) {
+					if (typeof url === 'string' && url.indexOf('/chat-widget') !== -1) {
+						return window.__nativeFetch__(url, opts);
+					}
+					return svelteKitFetch.apply(window, arguments);
+				};
+			})();
+		</script>
+		<script src="/chat-widget/widget.js"></script>
+	</body>
+</html>

@@ -1,0 +1,27 @@
+services:
+  bdforall-ui:
+    build: .
+    container_name: bdforall_ui
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - ORIGIN=https://api.bdforall.grupozangari.com.br
+      - PUBLIC_API_URL=https://api.bdforall.grupozangari.com.br
+    ports:
+      - "3050:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+networks:
+  default:
+    name: proxy-network
+    external: true
