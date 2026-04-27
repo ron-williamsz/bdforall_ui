@@ -2,6 +2,7 @@ import { goto } from '$app/navigation';
 import { apiClient, setToken, clearToken, TOKEN_KEY } from '$lib/api/client';
 
 const USER_KEY = 'bdforall_user';
+const REFRESH_KEY = 'bdforall_refresh_token';
 
 let token = $state<string | null>(null);
 let user = $state<any>(null);
@@ -25,26 +26,32 @@ export function loadAuth() {
 }
 
 export async function login(email: string, senha: string) {
-	const res = await apiClient.postWithParams('/auth/login', { email, senha });
+	const res = await apiClient.post('/auth/login', { email, senha });
 	token = res.access_token;
 	user = res.user;
 	isAuthenticated = true;
 	setToken(res.access_token);
 	localStorage.setItem(USER_KEY, JSON.stringify(res.user));
-	// Sincronizar token com o Chat Widget para carregar contextos do usuário
+	if (res.refresh_token) {
+		localStorage.setItem(REFRESH_KEY, res.refresh_token);
+	}
 	syncChatWidgetToken(res.access_token);
 	return res;
 }
 
-export function logout() {
+export async function logout() {
+	const refreshToken = typeof window !== 'undefined' ? localStorage.getItem(REFRESH_KEY) : null;
 	token = null;
 	user = null;
 	isAuthenticated = false;
 	clearToken();
 	if (typeof window !== 'undefined') {
 		localStorage.removeItem(USER_KEY);
-		// Limpar token do Chat Widget ao fazer logout
+		localStorage.removeItem(REFRESH_KEY);
 		syncChatWidgetToken(null);
+	}
+	if (refreshToken) {
+		try { await apiClient.post('/auth/logout', { refresh_token: refreshToken }); } catch {}
 	}
 	goto('/login');
 }
